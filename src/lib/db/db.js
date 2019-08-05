@@ -1,11 +1,27 @@
 var {singularize} = require('inflection');
 var chalk = require('chalk');
 
-module.exports = ({dbConnection}) => {
+module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware}) => {
   var dbConnection = dbConnection;
 
   var query = (string, args=[]) => {
     return new Promise((resolve, reject) => {
+      if (dbConfig.type === 'postgresql') {
+        var x = string.split('?');
+
+        var newString = [];
+
+        _.forEach(x, (s, index) => {
+          newString.push(s);
+
+          if (index !== x.length - 1) {
+            newString.push(`$${index + 1}`);
+          }
+        });
+
+        string = newString.join('');
+      }
+
       dbConnection.query(string, args, (error, result) => {
         /* istanbul ignore if */
         if (error) {
@@ -15,6 +31,10 @@ module.exports = ({dbConnection}) => {
           reject(error);
         }
         else {
+          if (dbConfig.type === 'postgresql') {
+            result = result.rows;
+          }
+
           resolve(result);
         }
       });
@@ -36,7 +56,11 @@ module.exports = ({dbConnection}) => {
           queryLogs.push({items: [`         args:   `, chalk.cyan(lib.json.stringify(args))]});
         }
 
-        if (!logs) _.forEach(queryLogs, ({items}) => log(...items));
+        if (!logs) _.forEach(queryLogs, ({items}) => {
+          if (process.env.NODE_ENV !== 'test') {
+            console.log(...items);
+          }
+        });
       }
 
       return query(string, args);
@@ -84,7 +108,7 @@ module.exports = ({dbConnection}) => {
     }
   };
 
-  db.Executor = require('./executor')({db});
+  db.Executor = require('./executor')({db, dbConfig, schemas, relationships, middleware});
 
   return db;
 };

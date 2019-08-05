@@ -1,13 +1,14 @@
-require('dotenv').config();
+require('module-alias/register');
 
 const bodyParser = require('body-parser');
-const passport = require("passport");
+const passport = require('passport');
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
-console.log(process.env.NODE_PATH)
+const pg = require('pg');
+
 var api = {
-  init: async ({dbConfig={}}) => {
+  init: async ({port, dbConfig={}, schemas, middleware, relationships, permissions}) => {
     //< server init
     const app = express();
     const jsonParser = bodyParser.json({type: () => true});
@@ -24,29 +25,36 @@ var api = {
     //> server init
 
     if (dbConfig.type === 'mysql') {
-
-        const dbConnection = mysql.createConnection({...mysqlCredentials[process.env.NODE_ENV], multipleStatements: true});
+      // const dbConnection = mysql.createConnection({...mysqlCredentials[process.env.NODE_ENV], multipleStatements: true});
     }
     else if (dbConfig.type === 'postgresql') {
+      var dbConnection = new pg.Client({
+        ..._.omit(dbConfig, ['type'])
+      });
 
+      // await dbConnection.connect();
+      // console.log('test');
+      // const res = await dbConnection.query('SELECT $1::text as message', ['Hello world!']);
+      // console.log(res.rows[0].message) // Hello world!
+      // await client.end()
     }
 
-    var sharedExports = {db: require('db/db')({dbConnection})};
+    var db = require('@src/lib/db/db')({dbConnection, dbConfig, schemas, middleware, relationships});
 
     // Misc final setup
-
-    var port = (process.env.NODE_ENV === 'test' ? (process.env.TEST_PORT || 3202) : (process.env.PORT || 3201));
 
     app.listen(port, () => console.log(`Weflow API [wf-api] running on port ${port}`));// eslint-disable-line
 
     dbConnection.connect((error) => {
       if (error) {
         //istanbul ignore next
-        console.log('Database connection error');
+        console.log('Database connection error: ', error);
       }
       else {
         _.forEach(['resources', 'auth'], routeKey => {
-          require(`routes/${routeKey}/${routeKey}`).init(db)
+          require(`@src/routes/${routeKey}/${routeKey}`).init({
+            db, app, schemas, permissions
+          })
         });
 
         if (process.env.NODE_ENV !== 'test') {
@@ -56,9 +64,7 @@ var api = {
         app.get('/status', (request, response) => response.send({success: true}));
       }
     });
-
-
   }
-}
+};
 
 module.exports = api;

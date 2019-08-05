@@ -1,12 +1,10 @@
 const auth = require('@src/lib/auth/auth');
 const {respond} = require('@src/lib/request');
-const permissions = require('@src/lib/auth/permissions/permissions');
-const schemas = require('@src/schemas/schemas');
 const {singularize} = require('inflection');
 const chalk = require('chalk');
 
 module.exports = {
-  init: ({app, db}) => {
+  init: ({app, db, schemas, permissions}) => {
     app.post('/resources', async (request, response) => {
       var promises = [], errors = [];
       var token = request.body.token;
@@ -40,7 +38,9 @@ module.exports = {
                 catch (error) {
                   promise = new Promise((resolve) => resolve(errors.push({message: `Resource ${resourceKey} does not exist`})));
 
-                  log(error);
+                  if (process.env.NODE_ENV !== 'test') {
+                    console.log(error);
+                  }
                 }
               }
 
@@ -61,7 +61,9 @@ module.exports = {
           else {
             var message = `Permission denied for: ${actionKey} ${resourceKey}`;
 
-            log(message);
+            if (process.env.NODE_ENV !== 'test') {
+              console.log(message);
+            }
 
             errors.push({key: 'permission-denied', message});
           }
@@ -81,21 +83,23 @@ module.exports = {
 
       respond({response, data, errors});
 
-      log('');
-      log(chalk.inverse(` POST /resources `), chalk.inverse(` ${Date.now() - requestStartTime}ms `),
-        new Date(), `userId: ${user ? user.id : '?'}`);
+      if (process.env.NODE_ENV !== 'test') {
+        console.log('');
+        console.log(chalk.inverse(` POST /resources `), chalk.inverse(` ${Date.now() - requestStartTime}ms `),
+          new Date(), `userId: ${user ? user.id : '?'}`);
 
-      if (errors.length > 0) {
-        _.forEach(errors, ({message}) => log(message));
+        if (errors.length > 0) {
+          _.forEach(errors, ({message}) => console.log(message));
+        }
+
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(' Request body:   ', chalk.magenta(lib.json.stringify(request.body.resources)));
+        }
+
+        //TODO log errors
+
+        _.forEach(logs, ({items}) => console.log(...items));
       }
-
-      if (process.env.NODE_ENV !== 'production') {
-        log(' Request body:   ', chalk.magenta(lib.json.stringify(request.body.resources)));
-      }
-
-      //TODO log errors
-
-      _.forEach(logs, ({items}) => log(...items));
     });
   }
 };

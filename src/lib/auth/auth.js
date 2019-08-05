@@ -30,7 +30,7 @@ const auth = {
       return await new Promise((resolve) => {
         jwt.verify(token, secret, (error, data) => {
           // istanbul ignore if
-          if (error) log(error);
+          if (error && process.env.NODE_ENV !== 'test') console.log(error);
 
           resolve(error ? {user: {}} : data);
         });
@@ -38,8 +38,13 @@ const auth = {
     },
 
     async userFor({db, token}) {
-      var data = await auth.token.dataFor({token});
-      var user = await db.get('user', {where: {id: data.user.id}}, {shouldLog: false});
+      var user = {};
+
+      if (token) {
+        var data = await auth.token.dataFor({token});
+
+        user = await db.get('user', {where: {id: data.user.id}}, {shouldLog: false});
+      }
 
       return user;
     }

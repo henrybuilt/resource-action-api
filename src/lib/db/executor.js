@@ -1,9 +1,6 @@
 var {singularize, pluralize} = require('inflection');
-var middleware = require('@src/lib/middleware/middleware');
-var relationships = require('@src/relationships/relationships');
-var schemas = require('@src/schemas/schemas');
 
-module.exports = ({db}) => {
+module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
   class Executor {
     constructor({resourceKey, actionKey, params={}, options}) {
       params = _.cloneDeep(params);
@@ -64,11 +61,11 @@ module.exports = ({db}) => {
     }
 
     async runMiddleware(args) {
-      if (this.options.useMiddleware) {
-        await middleware.run({db, ..._.pick(this, [
-          'resourceKey', 'actionKey', 'originalParams', 'params', 'queryData'
-        ]), ...args});
-      }
+      // if (this.options.useMiddleware) {
+      //   await middleware.run({db, ..._.pick(this, [
+      //     'resourceKey', 'actionKey', 'originalParams', 'params', 'queryData'
+      //   ]), ...args});
+      // }
     }
 
     //< params
@@ -239,7 +236,7 @@ module.exports = ({db}) => {
 
     async getTransformedQueryResult() {
       this.queryData.results = await db.query(this.queryData.string, this.queryData.args, this.options);
-
+      console.log(this.queryData.results);
       if (this.actionKey === 'create') {
         this.queryData.results = [{...this.params.props, id: this.queryData.results.insertId}];
       }
@@ -257,7 +254,7 @@ module.exports = ({db}) => {
             //WARNING json columns should still get null rather
             //WARNING than undefined when no defaultValue is specified
             if (!_.isNil(fieldValue)) {
-              if (type === 'json') fieldValue = JSON.parse(fieldValue);
+              if (type === 'json' && dbConfig.type !== 'postgresql') fieldValue = JSON.parse(fieldValue);
 
               resource[fieldKey] = fieldValue;
             }
