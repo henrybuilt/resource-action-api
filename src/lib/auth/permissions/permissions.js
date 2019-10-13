@@ -171,9 +171,9 @@ permissions.hasPermissionFor = async ({user, resourceKey, actionKey, params, db}
             else if (permissionGroup === 'user') {
               var schema = require(`@src/schemas/${_.kebabCase(resourceKey)}`);
 
-              if (schema.userPermissionsData) {
+              if (schema.permissionsData) {
                 hasPermission = await permissions.userHasPermissionFor({
-                  params, db, user, actionKey, resourceKey, ...schema.userPermissionsData
+                  params, db, user, actionKey, resourceKey, ...schema.permissionsData
                 });
               }
             }

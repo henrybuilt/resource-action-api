@@ -468,8 +468,8 @@ describe('resources', () => {
           //         await lib.async.forEach(projectResourceKeys, async resourceKey => {
           //           var schema = schemaFor({resourceKey});
           //
-          //           var parentForeignKey = _.keys(schema.userPermissionsData.hasPermissionByPropKey)[0];
-          //           var parentResourceKey = schema.userPermissionsData.resourcePathToUserId[0];
+          //           var parentForeignKey = _.keys(schema.permissionsData.hasPermissionByPropKey)[0];
+          //           var parentResourceKey = schema.permissionsData.resourcePathToUserId[0];
           //
           //           var props = {[parentForeignKey]: resources[parentResourceKey].id};
           //
