@@ -56,6 +56,8 @@ var api = {
         app.get('/status', (request, response) => response.send({success: true}));
       }
     });
+
+    return {app, db, dbConnection};
   }
 };
 
