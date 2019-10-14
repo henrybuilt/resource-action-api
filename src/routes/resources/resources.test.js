@@ -1,4 +1,4 @@
-var auth = require('@src/lib/auth/auth');
+var auth = require('../../lib/auth/auth');
 
 describe('resources', () => {
   describe('POST to "/resources"', () => {

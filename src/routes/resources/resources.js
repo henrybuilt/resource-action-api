@@ -1,5 +1,5 @@
-const auth = require('@src/lib/auth/auth');
-const {respond} = require('@src/lib/request');
+const auth = require('../../lib/auth/auth');
+const {respond} = require('../../lib/request');
 const {singularize} = require('inflection');
 const chalk = require('chalk');
 

@@ -25,25 +25,17 @@ var api = {
     //> server init
 
     if (dbConfig.type === 'mysql') {
-      // const dbConnection = mysql.createConnection({...mysqlCredentials[process.env.NODE_ENV], multipleStatements: true});
+      var dbConnection = mysql.createConnection({..._.omit(dbConfig, ['type']), multipleStatements: true});
     }
     else if (dbConfig.type === 'postgresql') {
-      var dbConnection = new pg.Client({
-        ..._.omit(dbConfig, ['type'])
-      });
-
-      // await dbConnection.connect();
-      // console.log('test');
-      // const res = await dbConnection.query('SELECT $1::text as message', ['Hello world!']);
-      // console.log(res.rows[0].message) // Hello world!
-      // await client.end()
+      var dbConnection = new pg.Client({..._.omit(dbConfig, ['type'])});
     }
 
-    var db = require('@src/lib/db/db')({dbConnection, dbConfig, schemas, middleware, relationships});
+    var db = require('./src/lib/db/db')({dbConnection, dbConfig, schemas, middleware, relationships});
 
     // Misc final setup
 
-    app.listen(port, () => console.log(`Weflow API [wf-api] running on port ${port}`));// eslint-disable-line
+    app.listen(port, () => console.log(`API running on port ${port}`));// eslint-disable-line
 
     dbConnection.connect((error) => {
       if (error) {
@@ -52,7 +44,7 @@ var api = {
       }
       else {
         _.forEach(['resources', 'auth'], routeKey => {
-          require(`@src/routes/${routeKey}/${routeKey}`).init({
+          require(`./src/routes/${routeKey}/${routeKey}`).init({
             db, app, schemas, permissions
           })
         });

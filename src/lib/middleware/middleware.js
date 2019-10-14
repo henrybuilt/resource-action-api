@@ -33,8 +33,8 @@ var middleware = {
     try {
       var kebabResourceKey = _.kebabCase(resourceKey);
       var helpers = middleware.helpersFor(props);
-      var middlewareModule = require(`@src/middleware/${kebabResourceKey}/${kebabResourceKey}`);
-
+      var middlewareModule = require(`/middleware/${kebabResourceKey}/${kebabResourceKey}`);
+      //TODO
       var middlewares = _.filter(middlewareModule, ({on, actions}) => {
         return _.includes(on, onKey) && _.includes(actions, actionKey);
       });

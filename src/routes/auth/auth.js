@@ -1,5 +1,5 @@
-const {respond} = require('@src/lib/request');
-const auth = require('@src/lib/auth/auth');
+const {respond} = require('../../lib/request');
+const auth = require('../../lib/auth/auth');
 
 module.exports = {
   init: ({app, db}) => {
