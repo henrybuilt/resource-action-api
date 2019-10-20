@@ -31,7 +31,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
       var tableName = tableNameMap[resourceKey];
       var queryData = {string: '', args: []};
 
-      var date = moment().format('YYYY-MM-DD HH:mm:ss');
+      var date = moment().utc().format('YYYY-MM-DD HH:mm:ss');
 
       _.extend(this, {
         resourceKey, pluralResourceKey, quantityMode, schema,
