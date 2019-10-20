@@ -1,4 +1,5 @@
 var {singularize, pluralize} = require('inflection');
+var moment = require('moment');
 
 module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
   class Executor {
@@ -30,12 +31,14 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
       var tableName = tableNameMap[resourceKey];
       var queryData = {string: '', args: []};
 
+      var date = moment().format('YYYY-MM-DD HH:mm:ss');
+
       _.extend(this, {
         resourceKey, pluralResourceKey, quantityMode, schema,
         actionKey,  params, originalParams,
         tableNameMap, fieldToColumnNameMap, permittedFields,
         tableName, queryData,
-        options
+        options, date
       });
     }
 
@@ -83,6 +86,17 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
 
       if (this.params.fields && !_.includes(this.params.fields, 'id')) this.params.fields.push('id');
       if (this.params.props && this.actionKey === 'update') delete this.params.props.id;
+
+      var dateFieldKeys = [];
+
+      if (this.actionKey === 'create') dateFieldKeys = ['created', 'lastUpdated'];
+      if (this.actionKey === 'update') dateFieldKeys = ['lastUpdated'];
+
+      _.forEach(dateFieldKeys, dateFieldKey => {
+        if (this.params.props[dateFieldKey] === undefined && this.schema.fields.lastUpdated !== undefined) {
+          this.params.props[dateFieldKey] = this.date;
+        }
+      });
 
       _.forEach(_.pick(this.params, ['where', 'order', 'fields', 'props']), (param, paramKey) => {
         if (Array.isArray(param)) {
@@ -144,6 +158,11 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
         }
         else {
           this.queryData.string = `UPDATE ${this.tableName} SET deleted = 1`;
+
+          if (this.schema.fields.lastUpdated) {
+            this.queryData.string += `, last_updated = ?`;
+            this.queryData.args = [this.date];
+          }
         }
       }
     }
@@ -153,6 +172,14 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
         if (this.params.where) {
           this.queryData.whereSqlStrings = _.map(this.params.where, (value, key) => {
             var string = `${key} = ?`;
+
+            if (value && value.operator !== undefined && value.value !== undefined) {
+              var operator = {'>': '>', '>=': '>=', '<=': '<=', '<': '<'}[value.operator];
+
+              if (operator) {
+                string = `${key} ${operator} ?`;
+              }
+            }
 
             if (Array.isArray(value)) {
               if (value.length > 0) {
@@ -168,7 +195,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
             return string;
           });
 
-          this.queryData.args.push(..._.values(this.params.where));
+          this.queryData.args.push(..._.map(this.params.where, value => (value && value.value) ? value.value : value));
 
           await this.runMiddleware({queryData, onKey: 'queryWhere'});
 
@@ -236,7 +263,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
 
     async getTransformedQueryResult() {
       this.queryData.results = await db.query(this.queryData.string, this.queryData.args, this.options);
-      console.log(this.queryData.results);
+
       if (this.actionKey === 'create') {
         this.queryData.results = [{...this.params.props, id: this.queryData.results.insertId}];
       }
