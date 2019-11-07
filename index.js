@@ -7,6 +7,16 @@ const mysql = require('mysql');
 const cors = require('cors');
 const pg = require('pg');
 
+global.log = (...args) => {
+  //istanbul ignore next
+  if (process.env.NODE_ENV !== 'test') alwaysLog(...args);
+};
+
+global.alwaysLog = (...args) => {
+  //istanbul ignore next
+  console.log(...args); //eslint-disable-line
+};
+
 var api = {
   init: async ({port, dbConfig={}, schemas, middleware, relationships, permissions}) => {
     //< server init
@@ -57,7 +67,10 @@ var api = {
       }
     });
 
-    return {app, db, dbConnection};
+    var {respond} = require('./src/lib/request');
+    var auth = require('./src/lib/auth/auth');
+
+    return {app, db, dbConnection, auth, respond};
   }
 };
 
