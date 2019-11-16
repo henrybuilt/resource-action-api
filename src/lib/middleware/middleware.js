@@ -1,4 +1,6 @@
-var middleware = {
+var {singularize} = require('inflection');
+
+var middlewareRunner = {
   helpersFor({...props}) {
     return {
       shouldInclude: (resourceKey) => {
@@ -29,13 +31,11 @@ var middleware = {
       }
     };
   },
-  async run({resourceKey, actionKey, onKey, ...props}) {
+  async run({resourceKey, actionKey, onKey, middleware: allMiddlewares, ...props}) {
     try {
-      var kebabResourceKey = _.kebabCase(resourceKey);
-      var helpers = middleware.helpersFor(props);
-      var middlewareModule = require(`/middleware/${kebabResourceKey}/${kebabResourceKey}`);
-      //TODO
-      var middlewares = _.filter(middlewareModule, ({on, actions}) => {
+      var helpers = middlewareRunner.helpersFor(props);
+
+      var middlewares = _.filter(allMiddlewares[singularize(resourceKey)], ({on, actions}) => {
         return _.includes(on, onKey) && _.includes(actions, actionKey);
       });
 
@@ -48,4 +48,4 @@ var middleware = {
   }
 };
 
-module.exports = middleware;
+module.exports = middlewareRunner;

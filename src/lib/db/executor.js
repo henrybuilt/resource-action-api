@@ -1,5 +1,6 @@
 var {singularize, pluralize} = require('inflection');
 var moment = require('moment');
+var middlewareRunner = require('../middleware/middleware');
 
 module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
   class Executor {
@@ -64,11 +65,11 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
     }
 
     async runMiddleware(args) {
-      // if (this.options.useMiddleware) {
-      //   await middleware.run({db, ..._.pick(this, [
-      //     'resourceKey', 'actionKey', 'originalParams', 'params', 'queryData'
-      //   ]), ...args});
-      // }
+      if (this.options.useMiddleware) {
+        await middlewareRunner.run({db, middleware, ..._.pick(this, [
+          'resourceKey', 'actionKey', 'originalParams', 'params', 'queryData'
+        ]), ...args});
+      }
     }
 
     //< params
@@ -171,25 +172,39 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
       if (_.includes(['get', 'update', 'destroy'], this.actionKey)) {
         if (this.params.where) {
           this.queryData.whereSqlStrings = _.map(this.params.where, (value, key) => {
-            var string = `${key} = ?`;
+            var string;
 
-            if (value && value.operator !== undefined && value.value !== undefined) {
-              var operator = {'>': '>', '>=': '>=', '<=': '<=', '<': '<'}[value.operator];
+            if (!(value && value.operator !== undefined)) {
+              value = {operator: Array.isArray(value) ? 'in' : '=', value};
+            }
 
-              if (operator) {
-                string = `${key} ${operator} ?`;
+            if (value && value.operator) {
+              var operator = {
+                '>': '>',
+                '>=': '>=',
+                '<=': '<=',
+                '<': '<',
+                '=': '=',
+                '!=': '!=',
+                'in': 'IN',
+                '!in': 'NOT IN',
+                'like': 'LIKE',
+                '!like': 'NOT LIKE'
+              }[value.operator];
+
+              var isEmptyArray = Array.isArray(value.value) && value.value.length === 0;
+
+              if (!isEmptyArray && operator) {
+                var preparedValue = _.includes(['IN', 'NOT IN'], operator) ? '(?)' : '?';
+
+                string = `${key} ${operator} ${preparedValue}`;
               }
             }
 
-            if (Array.isArray(value)) {
-              if (value.length > 0) {
-                string = `${key} IN (?)`;
-              }
-              else {
-                string = `1 = 2`;
+            if (!string) {
+              string = '1 = 2';
 
-                delete this.params.where[key];
-              }
+              delete this.params.where[key];
             }
 
             return string;
