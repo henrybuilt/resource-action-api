@@ -94,7 +94,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware}) => {
       if (this.actionKey === 'update') dateFieldKeys = ['lastUpdated'];
 
       _.forEach(dateFieldKeys, dateFieldKey => {
-        if (this.params.props[dateFieldKey] === undefined && this.schema.fields.lastUpdated !== undefined) {
+        if (this.params.props[dateFieldKey] === undefined && this.schema.fields[dateFieldKey] !== undefined) {
           this.params.props[dateFieldKey] = this.date;
         }
       });
