@@ -18,7 +18,7 @@ global.alwaysLog = (...args) => {
 };
 
 var api = {
-  init: async ({port, dbConfig={}, schemas, middleware, relationships, permissions}) => {
+  init: ({port, dbConfig={}, schemas, middleware, relationships, permissions}) => {
     //< server init
     const app = express();
     const jsonParser = bodyParser.json({type: () => true});
