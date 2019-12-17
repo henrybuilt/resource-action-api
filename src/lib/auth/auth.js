@@ -58,7 +58,7 @@ const auth = {
 
         user = await db.get('user', {where: {id: data.user.id}}, {shouldLog: false});
       }
-      console.trace('a', token, user);
+
       return user;
     }
   }
