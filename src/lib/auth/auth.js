@@ -51,14 +51,14 @@ const auth = {
     },
 
     async userFor({db, token}) {
-      var user = {};
+      var user;
 
       if (token) {
         var data = await auth.token.dataFor({token});
 
         user = await db.get('user', {where: {id: data.user.id}}, {shouldLog: false});
       }
-
+      console.trace('a', token, user);
       return user;
     }
   }

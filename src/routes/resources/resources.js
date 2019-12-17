@@ -8,6 +8,7 @@ module.exports = {
     app.post('/resources', async (request, response) => {
       var promises = [], errors = [];
       var token = request.body.token;
+      console.log('t', request.body);
       var user = await auth.token.userFor({db, token});
       var logs = [];
       var requestStartTime = Date.now();
