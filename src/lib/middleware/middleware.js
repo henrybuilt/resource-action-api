@@ -31,20 +31,20 @@ var middlewareRunner = {
       }
     };
   },
-  async run({resourceKey, actionKey, onKey, middleware: allMiddlewares, ...props}) {
-    try {
-      var helpers = middlewareRunner.helpersFor(props);
 
-      var middlewares = _.filter(allMiddlewares[singularize(resourceKey)], ({on, actions}) => {
-        return _.includes(on, onKey) && _.includes(actions, actionKey);
-      });
+  async run({resourceKey, actionKey, onKey, middleware: allMiddlewares, ...args}) {
+    var helpers = middlewareRunner.helpersFor(args);
+    var middlewares = allMiddlewares[singularize(resourceKey)];
 
-      await lib.async.forEach(middlewares, middleware => middleware.execute({actionKey, ...props, ...helpers}));
-    }
-    catch (error) {
-      //istanbul ignore if
-      if (!_.includes(error.message, 'Cannot find module')) alwaysLog(error);
-    }
+    middlewares = _.filter(middlewares, ({on, actions}) => {
+      return _.includes(on, onKey) && _.includes(actions, actionKey);
+    });
+
+    await lib.async.forEach(middlewares, async middleware => {
+      if (!middleware.shouldExecute || middleware.shouldExecute(args)) {
+        middleware.execute({actionKey, ...args, ...helpers});
+      }
+    });
   }
 };
 

@@ -1,4 +1,4 @@
-const auth = require('./auth');
+const auth = require('@src/lib/auth/auth');
 
 describe('lib.auth.auth', () => {
   describe('.passwordMatches()', () => {

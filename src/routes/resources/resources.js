@@ -2,80 +2,89 @@ const auth = require('../../lib/auth/auth');
 const {respond} = require('../../lib/request');
 const {singularize} = require('inflection');
 const chalk = require('chalk');
+const fileUpload = require('express-fileupload');
 
 module.exports = {
   init: ({app, db, schemas, permissions}) => {
-    app.post('/resources', async (request, response) => {
-      var promises = [], errors = [];
-      var token = request.body.token;
+    app.use(fileUpload());
 
-      var user = await auth.token.userFor({db, token});
+    app.post('/resources', async (request, response) => {
+      var singularResponses = [], errors = [];
+      var {body, files} = request;
+      var token = body.token;
+      var user = token ? await auth.token.userFor({db, token}) : null;
       var logs = [];
       var requestStartTime = Date.now();
 
-      await Promise.all(_.map(request.body.resources, async (action, actionKey) => {
-        await Promise.all(_.map(action, async (params, resourceKey) => {
-          var hasPermission = await permissions.hasPermissionFor({
-            user, resourceKey, actionKey, params, db
-          });
+      if (files) {
+        body.resources = JSON.parse(body.resources);
+      }
 
-          if (hasPermission) {
-            var execute = (params) => {
-              var promise;
+      var actions = lib.waterfall(body.resources, [
+        [_.mapValues, (action, actionKey) => ({action, actionKey})],
+        [_.sortBy, ({actionKey}) => ({get: 0, create: 1, update: 2, destroy: 3}[actionKey])]
+      ]);
+
+      await lib.async.forEach(actions, async ({action, actionKey}) => {
+        await lib.async.forEach(action, async (params, resourceKey) => {
+          var mode = Array.isArray(params) ? 'many' : 'one';
+          var pluralParams = mode === 'many' ? params : [params]; //always make params an array
+
+          var resourcesData = _.filter(await lib.async.map(pluralParams, async params => {
+            var hasPermission = await permissions.hasPermissionFor({
+              user, resourceKey, actionKey, params, db
+            });
+            //TODO has permission on each include
+
+            if (hasPermission) {
+              var getResourceData;
 
               if (schemas[singularize(resourceKey)]) {
-                promise = db.execute({actionKey, resourceKey, params}, {logs})
-                  .then(resourceData => ({actionKey, resourceKey, resourceData}))
-                  .catch(error => errors.push({message: error.message}));
+                getResourceData = () => db.execute({actionKey, resourceKey, params}, {source: '/resources', logs, user, files});
               }
               else {
                 try {
                   var pseudoResourceKey = _.kebabCase(singularize(resourceKey));
                   var pseudoResource = require(`./pseudo/${pseudoResourceKey}/${pseudoResourceKey}`);
+                  var execute = _.get(pseudoResource, `actions.${actionKey}.execute`);
 
-                  promise = pseudoResource.actions[actionKey].execute({db})
-                    .then(resourceData => ({actionKey, resourceKey, resourceData}));
+                  if (execute) getResourceData = () => execute({db});
                 }
                 catch (error) {
-                  promise = new Promise((resolve) => resolve(errors.push({message: `Resource ${resourceKey} does not exist`})));
-
-                  if (process.env.NODE_ENV !== 'test') {
-                    console.log(error);
-                  }
+                  errors.push({message: `${resourceKey}.${actionKey} is an invalid request`});
                 }
               }
 
-              return promise;
-            };
-
-            if (Array.isArray(params)) {
-              promises.push(Promise.all(_.map(params, params => execute(params))).then(results => {
-                var resourceData = _.map(_.filter(results, result => result.resourceData), 'resourceData');
-
-                return {actionKey, resourceKey, resourceData};
-              }));
+              if (getResourceData) {
+                try {
+                  var resourceData = await getResourceData();
+                }
+                catch (error) {
+                  errors.push({message: error.message});
+                }
+              }
             }
             else {
-              promises.push(execute(params));
-            }
-          }
-          else {
-            var message = `Permission denied for: ${actionKey} ${resourceKey}`;
-
-            if (process.env.NODE_ENV !== 'test') {
-              console.log(message);
+              errors.push({key: 'permission-denied', message: `Permission denied for: ${actionKey} ${resourceKey}`});
             }
 
-            errors.push({key: 'permission-denied', message});
-          }
-        }));
-      }));
+            return resourceData;
+          }), resourceData => resourceData !== undefined);
 
-      var resources = await Promise.all(promises);
+          if (resourcesData.length > 0) {
+            singularResponses.push({
+              actionKey,
+              resourceKey,
+              resourceData: mode === 'many' ? resourcesData : resourcesData[0]
+            });
+          }
+        });
+      });
+
       var data = {resources: {get: {}, create: {}}};
 
       if (!errors.length) {
-        _.forEach(resources, ({actionKey, resourceKey, resourceData}) => {
+        _.forEach(singularResponses, ({actionKey, resourceKey, resourceData}) => {
           if (_.includes(['get', 'create'], actionKey)) {
             data.resources[actionKey][resourceKey] = resourceData;
           }
@@ -84,23 +93,22 @@ module.exports = {
 
       respond({response, data, errors});
 
-      if (process.env.NODE_ENV !== 'test') {
-        console.log('');
-        console.log(chalk.inverse(` POST /resources `), chalk.inverse(` ${Date.now() - requestStartTime}ms `),
-          new Date(), `userId: ${user ? user.id : '?'}`);
 
-        if (errors.length > 0) {
-          _.forEach(errors, ({message}) => console.log(message));
-        }
+      log('');
+      log(chalk.inverse(` POST /resources `), chalk.inverse(` ${Date.now() - requestStartTime}ms `),
+        new Date(), `userId: ${user ? user.id : '?'}`);
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(' Request body:   ', chalk.magenta(lib.json.stringify(request.body.resources)));
-        }
-
-        //TODO log errors
-
-        _.forEach(logs, ({items}) => console.log(...items));
+      if (errors.length > 0) {
+        _.forEach(errors, ({message}) => log(message));
       }
+
+      if (process.env.NODE_ENV !== 'production') {
+        log(' body: ', chalk.magenta(lib.json.stringify(body.resources)));
+      }
+
+      //TODO log errors
+
+      _.forEach(logs, ({items}) => log(...items));
     });
   }
 };

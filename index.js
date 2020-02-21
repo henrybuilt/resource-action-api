@@ -17,8 +17,13 @@ global.alwaysLog = (...args) => {
   console.log(...args); //eslint-disable-line
 };
 
+//TODO pseudoResources
+//TODO hb resources route
+//TODO files support
+//TODO s3
+//TODO mail
 var api = {
-  init: ({port, dbConfig={}, schemas, middleware, relationships, permissions}) => {
+  init: ({port, dbConfig, schemas, middleware, relationships, permissions}) => {
     //< server init
     const app = express();
     const jsonParser = bodyParser.json({type: () => true});
