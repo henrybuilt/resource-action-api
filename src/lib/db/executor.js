@@ -282,7 +282,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
       var schema = schemas[resourceKey];
 
-      var {childEdgeResourceKeys} = schema;
+      var {childEdgeResourceKeys} = schema; //TODO get from relationships?
       var {associations} = schema.fields;
 
       if (where) {
