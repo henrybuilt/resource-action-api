@@ -16,7 +16,7 @@ describe('db', () => {
   });
 
   describe('middleware', () => {
-    it('should use the middleware based on needed resourseKey', async () => {
+    it('should use the middleware based on needed resourceKey', async () => {
       await test.db.create('medium', {id: 1, associations: {products: {id_1: 1}}});
       await test.db.create('medium', {id: 2, associations: {products: {id_1: 1}}});
       await test.db.create('medium', {id: 3, associations: {products: {id_2: 1}}});
