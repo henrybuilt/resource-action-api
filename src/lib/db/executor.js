@@ -19,7 +19,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       var originalParams = _.cloneDeep(params);
       var resourceKey = singularize(resourceKey);
       var schema = schemas[resourceKey];
-      var modifyParams = _.get(schema, 'permissionsData.modifyParams');
+      var modifyParams = _.get(schema, 'permissionsData.modifyParams'); //TODO pass permissions
 
       if (!schema) throw new Error('Invalid resourceKey');
 
@@ -417,15 +417,60 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
           //make requests for all included items that are owned by the current resource
           await lib.async.forEach(ownedIncludes, async (params, childResourceKey) => {
-            var {childField, parentField} = children[childResourceKey];
-            var resources = Array.isArray(this.result) ? this.result : [this.result];
+            var resources = _.filter(Array.isArray(this.result) ? this.result : [this.result], resource => resource !== undefined);
 
             if (resources.length) {
-              var parentFieldValues = _.map(resources, parentField);
-              var whereField =  childField === 'associations' ? `${singularize(resourceKey)}Id` : childField;
+              var parentChildRelationship = children[childResourceKey];
+              var usingEdges = _.includes(['childEdge', 'parentEdge'], parentChildRelationship);
+
+              if (usingEdges) {
+                //i.e. media & products: media is parent
+                //i.e. product including media: from media to product - getting fromIds
+                //i.e. media including product: from media to product - getting toIds
+                var direction = parentChildRelationship === 'childEdge' ? 'to' : 'from';
+                var inverseDirection = direction === 'from' ? 'to' : 'from';
+
+                var edges = await db.get('edges', {where: {
+                  [`${direction}Id`]: _.map(resources, 'id'),
+                  [`${direction}ResourceKey`]: resourceKey,
+                  [`${inverseDirection}ResourceKey`]: singularize(childResourceKey)
+                }});
+
+                var childField = 'id';
+                var parentField = 'id';
+                var whereField = 'id';
+                var parentFieldValues = _.map(edges, `${inverseDirection}Id`);
+
+                //HINT edgeMap is a performance improvement over using _.some
+                var edgeMap = {};
+
+                var edgeMapKey1 = `${direction}Id`;
+                var edgeMapKey2 = `${inverseDirection}Id`;
+
+                _.forEach(edges, edge => {
+                  edgeMap[`${edgeMapKey1}-${edge[edgeMapKey1]}_${edgeMapKey2}-${edge[edgeMapKey2]}`] = true;
+                });
+              }
+              else {
+                var {childField, parentField} = parentChildRelationship;
+                var parentFieldValues = _.map(resources, parentField); //{product_tags: {id_1: {},  }}
+                var whereField = childField;
+
+                if (childField === 'associations') {
+                  whereField = `${singularize(resourceKey)}Id`;
+                }
+                else if (parentField === 'associations') {
+                  whereField = 'id';
+                  parentFieldValues = _.flatMap(parentFieldValues, associations => {
+                    var childAssociations = _.get(associations, `${pluralize(childResourceKey)}`, {});
+
+                    return _.map(_.keys(childAssociations), key => parseInt(key.replace('id_', '')));
+                  });
+                }
+              }
 
               //istanbul ignore if
-              if (!childField || !parentField) {
+              if (!usingEdges && (!childField || !parentField)) {
                 throw new Error(`improperly formatted relationship: ${resourceKey}-${childResourceKey}`);
               }
 
@@ -438,9 +483,20 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               _.forEach(resources, (resource) => {
                 var parentFieldValue = resource[parentField];
 
-                if (childField === 'associations') {
+                if (usingEdges) {
                   var associatedChildResources = _.filter(childResources, childResource => {
-                    return _.get(childResource, `associations.${pluralize(resourceKey)}.id_${parentFieldValue}`) === 1; //TODO
+                    return edgeMap[`${edgeMapKey1}-${parentFieldValue}_${edgeMapKey2}-${childResource.id}`];
+                  });
+                }
+                else if (childField === 'associations') {
+                  var associatedChildResources = _.filter(childResources, childResource => {
+                    return _.get(childResource, `associations.${pluralize(resourceKey)}.id_${parentFieldValue}`) !== undefined;
+                  });
+                }
+                else if (parentField === 'associations') {
+                  //WARNING: product-options are still kebab case in product associations
+                  var associatedChildResources = _.filter(childResources, childResource => {
+                    return _.get(resource, `associations.${pluralize(childResourceKey)}.id_${childResource.id}`) !== undefined;
                   });
                 }
                 else {
