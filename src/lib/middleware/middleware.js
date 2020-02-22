@@ -35,7 +35,7 @@ var middlewareRunner = {
   async run({resourceKey, actionKey, onKey, middleware: allMiddlewares, ...args}) {
     var helpers = middlewareRunner.helpersFor(args);
     var middlewares = allMiddlewares[singularize(resourceKey)];
-
+  
     middlewares = _.filter(middlewares, ({on, actions}) => {
       return _.includes(on, onKey) && _.includes(actions, actionKey);
     });

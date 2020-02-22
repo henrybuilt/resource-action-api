@@ -5,7 +5,7 @@ const chalk = require('chalk');
 const fileUpload = require('express-fileupload');
 
 module.exports = {
-  init: ({app, db, schemas, permissions}) => {
+  init: ({app, db, schemas, permissions, pseudoResources}) => {
     app.use(fileUpload());
 
     app.post('/resources', async (request, response) => {
@@ -43,14 +43,12 @@ module.exports = {
                 getResourceData = () => db.execute({actionKey, resourceKey, params}, {source: '/resources', logs, user, files});
               }
               else {
-                try {
-                  var pseudoResourceKey = _.kebabCase(singularize(resourceKey));
-                  var pseudoResource = require(`./pseudo/${pseudoResourceKey}/${pseudoResourceKey}`);
-                  var execute = _.get(pseudoResource, `actions.${actionKey}.execute`);
+                var execute = _.get(pseudoResources, `${singularize(resourceKey)}.actions.${actionKey}.execute`);
 
-                  if (execute) getResourceData = () => execute({db});
+                if (execute) {
+                  getResourceData = () => execute({db});
                 }
-                catch (error) {
+                else {
                   errors.push({message: `${resourceKey}.${actionKey} is an invalid request`});
                 }
               }

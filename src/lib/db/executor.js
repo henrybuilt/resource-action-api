@@ -19,7 +19,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       var originalParams = _.cloneDeep(params);
       var resourceKey = singularize(resourceKey);
       var schema = schemas[resourceKey];
-      var modifyParams = _.get(schema, 'permissionsData.modifyParams'); //TODO pass permissions
+      var modifyParams = _.get(schema, 'permissionsData.modifyParams');
 
       if (!schema) throw new Error('Invalid resourceKey');
 

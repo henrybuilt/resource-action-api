@@ -3,7 +3,7 @@ var chalk = require('chalk');
 
 module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, permissions}) => {
   var dbConnection = dbConnection;
-
+  
   var query = (string, args=[]) => {
     return new Promise((resolve, reject) => {
       var startTime = Date.now();

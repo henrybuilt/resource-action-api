@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const secret = process.env.HENRYBUILT_API_TOKEN_SECRET;
+const secret = process.env.TOKEN_SECRET;
 
 const auth = {
   passwordMatches({password, user}) {

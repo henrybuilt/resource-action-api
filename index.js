@@ -1,5 +1,3 @@
-require('module-alias/register');
-
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const express = require('express');
@@ -23,11 +21,11 @@ global.alwaysLog = (...args) => {
 //TODO s3
 //TODO mail
 var api = {
-  init: ({port, dbConfig, schemas, middleware, relationships, permissions}) => {
+  init: ({port, dbConfig, schemas, middleware, relationships, permissions, pseudoResources}) => {
     //< server init
     const app = express();
     const jsonParser = bodyParser.json({type: () => true});
-
+  
     app.use(bodyParser.urlencoded({extended: true}));
     app.use(jsonParser);
     app.use(cors());
@@ -46,7 +44,7 @@ var api = {
       var dbConnection = new pg.Client({..._.omit(dbConfig, ['type'])});
     }
 
-    var db = require('./src/lib/db/db')({dbConnection, dbConfig, schemas, middleware, relationships});
+    var db = require('./src/lib/db/db')({dbConnection, dbConfig, schemas, middleware, relationships, permissions});
 
     // Misc final setup
 
@@ -60,7 +58,7 @@ var api = {
       else {
         _.forEach(['resources', 'auth'], routeKey => {
           require(`./src/routes/${routeKey}/${routeKey}`).init({
-            db, app, schemas, permissions
+            db, app, schemas, permissions, pseudoResources
           })
         });
 
