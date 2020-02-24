@@ -1,11 +1,13 @@
 var {singularize} = require('inflection');
 var chalk = require('chalk');
 
-module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware}) => {
+module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, permissions}) => {
   var dbConnection = dbConnection;
-
+  
   var query = (string, args=[]) => {
     return new Promise((resolve, reject) => {
+      var startTime = Date.now();
+      
       if (dbConfig.type === 'postgresql') {
         var x = string.split('?');
 
@@ -23,6 +25,23 @@ module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware}) 
       }
 
       dbConnection.query(string, args, (error, result) => {
+        var endTime = Date.now();
+        var deltaTime = endTime - startTime;
+        
+        if (process.env.NODE_ENV !== 'test') {
+          var color = deltaTime > 50 ? 'red' : 'green';
+
+          log(`  query: (${deltaTime}ms) `, chalk[color](string));
+
+          if (deltaTime > 200) {
+            console.trace('logging trace to help debug slow query');
+          }
+
+          if (process.env.NODE_ENV !== 'production' && args) {
+            log(`  args: `, chalk[color](lib.json.stringify(args)));
+          }
+        }
+
         /* istanbul ignore if */
         if (error) {
           console.log(string, args); //eslint-disable-line
@@ -108,7 +127,7 @@ module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware}) 
     }
   };
 
-  db.Executor = require('./executor')({db, dbConfig, schemas, relationships, middleware});
+  db.Executor = require('./executor')({db, dbConfig, schemas, relationships, middleware, permissions});
 
   return db;
 };
