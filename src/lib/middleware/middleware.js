@@ -42,7 +42,7 @@ var middlewareRunner = {
 
     await lib.async.forEach(middlewares, async middleware => {
       if (!middleware.shouldExecute || middleware.shouldExecute(args)) {
-        middleware.execute({actionKey, ...args, ...helpers});
+        await middleware.execute({actionKey, ...args, ...helpers});
       }
     });
   }
