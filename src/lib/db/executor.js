@@ -293,6 +293,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
             if (where[whereKey] !== undefined) {
               var ids = Array.isArray(where[whereKey]) ? where[whereKey] : [where[whereKey]];
 
+              //TODO type parent
               queryData.whereSqlStrings.push(` EXISTS (SELECT NULL FROM edges WHERE edges.from_resource_key = ? AND edges.to_resource_key = ? AND edges.from_id = \`${this.tableName}\`.id AND edges.to_id IN (?) AND deleted = 0)`);
               queryData.args.push(resourceKey, childResourceKey, ids);
             }
@@ -411,6 +412,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
           ownedIncludes = _.pickBy(directInclude, (params, key) => !!children[key]);
 
+          //TODO depth: 1 | 'inf'
           if (!this.options.deepInclude) {
             include = _.pickBy(directInclude, (params, key) => !children[key]);
           }
@@ -435,6 +437,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
                   [`${direction}ResourceKey`]: resourceKey,
                   [`${inverseDirection}ResourceKey`]: singularize(childResourceKey)
                 }});
+                //TODO type: parent
 
                 var childField = 'id';
                 var parentField = 'id';
