@@ -95,10 +95,10 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
     async runMiddleware(args) {
       if (this.options.useMiddleware) {
         await middlewareRunner.run({
-          db, 
-          middleware, 
-          dbOptions: this.options, 
-          ..._.pick(this, ['resourceKey', 'actionKey', 'originalParams', 'params', 'queryData', 'files']), 
+          db,
+          middleware,
+          dbOptions: this.options,
+          ..._.pick(this, ['resourceKey', 'actionKey', 'originalParams', 'params', 'queryData', 'files']),
           ...args
         });
       }
