@@ -95,10 +95,10 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
     async runMiddleware(args) {
       if (this.options.useMiddleware) {
         await middlewareRunner.run({
-          db, 
-          middleware, 
-          dbOptions: this.options, 
-          ..._.pick(this, ['resourceKey', 'actionKey', 'originalParams', 'params', 'queryData', 'files']), 
+          db,
+          middleware,
+          dbOptions: this.options,
+          ..._.pick(this, ['resourceKey', 'actionKey', 'originalParams', 'params', 'queryData', 'files']),
           ...args
         });
       }
@@ -210,7 +210,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       }
     }
 
-    async setWhereQueryData(queryData) {
+    async setWhereQueryData() {
       if (_.includes(['get', 'update', 'destroy'], this.actionKey)) {
         if (this.params.where) {
           this.queryData.whereSqlStrings = _.map(this.params.where, (value, key) => {
@@ -266,7 +266,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
             this.queryData.args.push(hasPermissionUserId, `$.sharedUserIds."${hasPermissionUserId}"`);
           }
 
-          await this.runMiddleware({queryData, onKey: 'queryWhere'});
+          await this.runMiddleware({queryData: this.queryData, onKey: 'queryWhere'});
           await this.filterByAssociations();
 
           if (this.queryData.whereSqlStrings.length) {
