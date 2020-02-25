@@ -95,10 +95,10 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
     async runMiddleware(args) {
       if (this.options.useMiddleware) {
         await middlewareRunner.run({
-          db, 
-          middleware, 
-          dbOptions: this.options, 
-          ..._.pick(this, ['resourceKey', 'actionKey', 'originalParams', 'params', 'queryData', 'files']), 
+          db,
+          middleware,
+          dbOptions: this.options,
+          ..._.pick(this, ['resourceKey', 'actionKey', 'originalParams', 'params', 'queryData', 'files']),
           ...args
         });
       }
@@ -210,7 +210,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       }
     }
 
-    async setWhereQueryData(queryData) {
+    async setWhereQueryData() {
       if (_.includes(['get', 'update', 'destroy'], this.actionKey)) {
         if (this.params.where) {
           this.queryData.whereSqlStrings = _.map(this.params.where, (value, key) => {
@@ -266,7 +266,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
             this.queryData.args.push(hasPermissionUserId, `$.sharedUserIds."${hasPermissionUserId}"`);
           }
 
-          await this.runMiddleware({queryData, onKey: 'queryWhere'});
+          await this.runMiddleware({queryData: this.queryData, onKey: 'queryWhere'});
           await this.filterByAssociations();
 
           if (this.queryData.whereSqlStrings.length) {
@@ -293,6 +293,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
             if (where[whereKey] !== undefined) {
               var ids = Array.isArray(where[whereKey]) ? where[whereKey] : [where[whereKey]];
 
+              //TODO type parent
               queryData.whereSqlStrings.push(` EXISTS (SELECT NULL FROM edges WHERE edges.from_resource_key = ? AND edges.to_resource_key = ? AND edges.from_id = \`${this.tableName}\`.id AND edges.to_id IN (?) AND deleted = 0)`);
               queryData.args.push(resourceKey, childResourceKey, ids);
             }
@@ -411,6 +412,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
           ownedIncludes = _.pickBy(directInclude, (params, key) => !!children[key]);
 
+          //TODO depth: 1 | 'inf'
           if (!this.options.deepInclude) {
             include = _.pickBy(directInclude, (params, key) => !children[key]);
           }
@@ -435,6 +437,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
                   [`${direction}ResourceKey`]: resourceKey,
                   [`${inverseDirection}ResourceKey`]: singularize(childResourceKey)
                 }});
+                //TODO type: parent
 
                 var childField = 'id';
                 var parentField = 'id';
