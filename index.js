@@ -24,8 +24,8 @@ var api = {
   init: ({port, dbConfig, schemas, middleware, relationships, permissions, pseudoResources}) => {
     //< server init
     const app = express();
-    const jsonParser = bodyParser.json({type: () => true});
-  
+    const jsonParser = bodyParser.json();
+
     app.use(bodyParser.urlencoded({extended: true}));
     app.use(jsonParser);
     app.use(cors());
