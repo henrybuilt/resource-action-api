@@ -38,7 +38,7 @@ var api = {
     //> server init
 
     if (dbConfig.type === 'mysql') {
-      var dbConnection = mysql.createConnection({..._.omit(dbConfig, ['type']), multipleStatements: true});
+      var dbConnection = mysql.createConnection({..._.omit(dbConfig, ['type']), multipleStatements: true, timezone: 'UTC'});
     }
     else if (dbConfig.type === 'postgresql') {
       var dbConnection = new pg.Client({..._.omit(dbConfig, ['type'])});
