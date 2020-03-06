@@ -237,9 +237,14 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               var isEmptyArray = Array.isArray(value.value) && value.value.length === 0;
 
               if (!isEmptyArray && operator) {
-                var preparedValue = _.includes(['IN', 'NOT IN'], operator) ? '(?)' : '?';
+                if (operator === '!=' && value === null) {
+                  string = `\`${this.tableName}\`.\`${key}\` IS NOT NULL`;
+                }
+                else {
+                  var preparedValue = _.includes(['IN', 'NOT IN'], operator) ? '(?)' : '?';
 
-                string = `\`${this.tableName}\`.\`${key}\` ${operator} ${preparedValue}`;
+                  string = `\`${this.tableName}\`.\`${key}\` ${operator} ${preparedValue}`;
+                }
               }
             }
 
