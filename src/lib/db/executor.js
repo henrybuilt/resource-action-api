@@ -237,8 +237,8 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               var isEmptyArray = Array.isArray(value.value) && value.value.length === 0;
 
               if (!isEmptyArray && operator) {
-                if (operator === '!=' && value === null) {
-                  string = `\`${this.tableName}\`.\`${key}\` IS NOT NULL`;
+                if (value === null) {
+                  string = `\`${this.tableName}\`.\`${key}\` IS ${operator === '!=' ? 'NOT ' : ''}NULL`;
                 }
                 else {
                   var preparedValue = _.includes(['IN', 'NOT IN'], operator) ? '(?)' : '?';
@@ -257,7 +257,12 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
             return string;
           });
 
-          this.queryData.args.push(..._.map(this.params.where, value => (value && value.value) ? value.value : value));
+          var args = _.values(this.params.where);
+
+          args = _.map(, value => (value && value.value) ? value.value : value);
+          args = _.reject(args, arg => arg === null); //HINT null is always handled by IS NULL or IS NOT NULL
+
+          this.queryData.args.push(...args);
 
           //WARNING any modifications to args/strings should come after here
           //WARNING because they need to have matching indices
