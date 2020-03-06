@@ -57,6 +57,17 @@ describe('db', () => {
         });
       });
 
+      // TODO
+      // describe('is not null', () => {
+      //   it('should use WHERE IN query', async () => {
+      //     await test.db.create('products', [{id: 1}, {id: 2}, {id: 3}]);
+      //
+      //     var products = await test.db.execute({actionKey: 'get', resourceKey: 'products', params: {where: {id: [1, 3]}}});
+      //
+      //     expect(products.length).to.equal(2);
+      //   });
+      // });
+
       describe('field is empty', () => {
         it('should not consider where condition', async () => {
           await test.db.create('products', [{id: 1}, {id: 2}]);
