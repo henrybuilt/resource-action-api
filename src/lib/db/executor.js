@@ -259,7 +259,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
           var args = _.values(this.params.where);
 
-          args = _.map(, value => (value && value.value) ? value.value : value);
+          args = _.map(args, arg => (arg && arg.value) ? arg.value : arg);
           args = _.reject(args, arg => arg === null); //HINT null is always handled by IS NULL or IS NOT NULL
 
           this.queryData.args.push(...args);
