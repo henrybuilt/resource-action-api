@@ -59,6 +59,8 @@ module.exports = {
                 }
                 catch (error) {
                   errors.push({message: error.message});
+
+                  if (process.env.NODE_ENV !== 'test') console.error(error);
                 }
               }
             }
