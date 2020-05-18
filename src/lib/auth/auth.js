@@ -21,7 +21,7 @@ const auth = {
           reject(error);
         }
         else {
-          resolve(hash);
+          resolve(hash.replace('$2b', '$2a')); //HINT this fixes an encryption bug that breaks password comparison in rails due to a bcrypt issue
         }
       });
     });
