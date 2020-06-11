@@ -299,13 +299,20 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
         if (childEdgeResourceKeys) {
           await lib.async.forEach(childEdgeResourceKeys, async (childResourceKey) => {
             var whereKey = `${childResourceKey}Id`;
+            var whereValue = where[whereKey];
 
-            if (where[whereKey] !== undefined) {
-              var ids = Array.isArray(where[whereKey]) ? where[whereKey] : [where[whereKey]];
+            if (whereValue !== undefined) {
+              if (whereValue === null) {
+                queryData.whereSqlStrings.push(` NOT EXISTS (SELECT NULL FROM edges WHERE edges.from_resource_key = ? AND edges.to_resource_key = ? AND edges.from_id = \`${this.tableName}\`.id AND deleted = 0)`);
+                queryData.args.push(resourceKey, childResourceKey);
+              }
+              else {
+                var ids = Array.isArray(whereValue) ? whereValue : [whereValue];
 
-              //TODO type parent
-              queryData.whereSqlStrings.push(` EXISTS (SELECT NULL FROM edges WHERE edges.from_resource_key = ? AND edges.to_resource_key = ? AND edges.from_id = \`${this.tableName}\`.id AND edges.to_id IN (?) AND deleted = 0)`);
-              queryData.args.push(resourceKey, childResourceKey, ids);
+                //TODO type parent
+                queryData.whereSqlStrings.push(` EXISTS (SELECT NULL FROM edges WHERE edges.from_resource_key = ? AND edges.to_resource_key = ? AND edges.from_id = \`${this.tableName}\`.id AND edges.to_id IN (?) AND deleted = 0)`);
+                queryData.args.push(resourceKey, childResourceKey, ids);
+              }
             }
           });
         }
