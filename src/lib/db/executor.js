@@ -396,6 +396,9 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               else if (defaultValue !== undefined) {
                 resource[fieldKey] = _.cloneDeep(defaultValue);
               }
+              else {
+                resource[fieldKey] = fieldValue;
+              }
             });
 
             return resource;
