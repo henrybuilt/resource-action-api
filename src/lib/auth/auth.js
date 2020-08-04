@@ -41,12 +41,12 @@ const auth = {
     },
 
     async dataFor({token}) {
-      return await new Promise((resolve) => {
+      return await new Promise((resolve, reject) => {
         jwt.verify(token, secret, (error, data) => {
           // istanbul ignore if
           if (error && process.env.NODE_ENV !== 'test') console.log(error);
 
-          resolve(error ? {user: {}} : data);
+          error ? reject(error) : resolve(data);
         });
       });
     },
