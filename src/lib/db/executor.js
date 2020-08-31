@@ -272,7 +272,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
           if (hasPermissionUserId) {
             //HINT eventually we'll actually use canRead, canWrite, but they're just there for future-proofness for now
-            this.queryData.whereSqlStrings.push(`user_id = ? OR JSON_EXTRACT(permissions, ?) IS NOT NULL`);
+            this.queryData.whereSqlStrings.push(`(user_id = ? OR JSON_EXTRACT(permissions, ?) IS NOT NULL)`);
             this.queryData.args.push(hasPermissionUserId, `$.sharedUserIds."${hasPermissionUserId}"`);
           }
 
