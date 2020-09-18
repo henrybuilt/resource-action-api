@@ -193,6 +193,10 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
         this.queryData.args = _.values(this.params.props);
       }
       else if (this.actionKey === 'update') {
+        var mightBeAccidentallyUpdatingAll = (!this.params.where || _.size(this.params.where) === 0) && !this.params.updateAll;
+
+        if (mightBeAccidentallyUpdatingAll) throw new Error('Delete all failed');
+
         var setSql = _.map(_.keys(this.params.props), key => `\`${key}\` = ? `).join(', ');
 
         this.queryData.string = `UPDATE \`${this.tableName}\` SET ${setSql} `;
@@ -206,16 +210,13 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       else if (this.actionKey === 'destroy') {
         var mightBeAccidentallyDeletingAll = (!this.params.where || _.size(this.params.where) === 0) && !this.params.destroyAll;
 
-        if (mightBeAccidentallyDeletingAll) {
-          throw new Error('Delete all failed');
-        }
-        else {
-          this.queryData.string = `UPDATE \`${this.tableName}\` SET deleted = 1 `;
+        if (mightBeAccidentallyDeletingAll) throw new Error('Delete all failed');
 
-          if (this.schema.fields.lastUpdated) {
-            this.queryData.string += `, last_updated = ?`;
-            this.queryData.args = [this.date];
-          }
+        this.queryData.string = `UPDATE \`${this.tableName}\` SET deleted = 1 `;
+
+        if (this.schema.fields.lastUpdated) {
+          this.queryData.string += `, last_updated = ?`;
+          this.queryData.args = [this.date];
         }
       }
     }
