@@ -195,7 +195,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       else if (this.actionKey === 'update') {
         var mightBeAccidentallyUpdatingAll = (!this.params.where || _.size(this.params.where) === 0) && !this.params.updateAll;
 
-        if (mightBeAccidentallyUpdatingAll) throw new Error('Delete all failed');
+        if (mightBeAccidentallyUpdatingAll) throw new Error('Update all failed');
 
         var setSql = _.map(_.keys(this.params.props), key => `\`${key}\` = ? `).join(', ');
 
