@@ -166,8 +166,18 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
           });
         }
         else {
-          param = _.pickBy(param, (value, key) => _.includes(this.permittedFields, key));
-          param = _.mapKeys(param, (value, key) => this.fieldToColumnNameMap[key] || key);
+          param = _.pickBy(param, (value, key) => {
+            var keep = _.includes(this.permittedFields, key);
+
+            //HINT disallow, i.e. story.status (string) = {key: 1} - which throws a mysql error and is a security risk
+            if (paramKey === 'props' && _.get(this.schema.fields, `${key}.type`) !== 'json' && typeof(value) === 'object') {
+              keep = false;
+            }
+
+            return keep;
+          });
+
+          param = _.mapKeys(param, (_value, key) => this.fieldToColumnNameMap[key] || key);
         }
 
         this.params[paramKey] = param;
@@ -259,7 +269,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
           var args = _.values(this.params.where);
 
-          args = _.map(args, arg => (arg !== undefined && arg.value !== undefined) ? arg.value : arg);
+          args = _.map(args, arg => _.get(arg, 'value', arg)); //HINT to support {operator: '!=', value: 10}
           args = _.reject(args, arg => arg === null); //HINT null is always handled by IS NULL or IS NOT NULL
 
           this.queryData.args.push(...args);
