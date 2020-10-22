@@ -1,4 +1,4 @@
-var {respond} = require('@src/lib/request');
+var {respond} = require('../request.js');
 var chalk = require('chalk');
 
 //HINT helper function to make adding routes more generic
@@ -37,6 +37,8 @@ module.exports = ({app, db, auth}) => function(path, callback, {requireUser=true
       data ? respond({response, data}) : respond({response});
     }
     catch (error) {
+      if (error.data) errorData = error.data;
+
       if (errorData) {
         if (process.env.NODE_ENV !== 'test') console.error(errorData);
       }
@@ -44,7 +46,7 @@ module.exports = ({app, db, auth}) => function(path, callback, {requireUser=true
         console.error(error);
       }
 
-      respond({response, error: errorData});
+      respond({response, error: errorData || {message: 'Something went wrong', error}});
     }
   });
 };
