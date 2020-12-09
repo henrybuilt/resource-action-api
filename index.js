@@ -16,7 +16,6 @@ global.alwaysLog = (...args) => {
 };
 
 //TODO pseudoResources
-//TODO hb resources route
 //TODO files support
 //TODO s3
 //TODO mail
