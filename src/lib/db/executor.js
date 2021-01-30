@@ -170,7 +170,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
             var keep = _.includes(this.permittedFields, key);
 
             //HINT disallow, i.e. story.status (string) = {key: 1} - which throws a mysql error and is a security risk
-            if (paramKey === 'props' && !_.includes(['json', 'date'], _.get(this.schema.fields, `${key}.type`)) && typeof(value) === 'object') {
+            if (paramKey === 'props' && !_.includes(['json', 'date'], _.get(this.schema.fields, `${key}.type`)) && (value !== null && typeof(value) === 'object')) {
               keep = false;
             }
 
