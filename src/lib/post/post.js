@@ -20,7 +20,12 @@ module.exports = ({app, db, auth}) => function(path, callback, {requireUser=true
     }
 
     if (token) {
-      user = await auth.token.userFor({db, token});
+      try {
+        user = await auth.token.userFor({db, token});
+      }
+      catch (error) {
+        console.log(error);
+      }
     }
 
     var errorData, throwError = (_errorData) => {
