@@ -34,13 +34,12 @@ module.exports = {
             var hasPermission = await permissions.hasPermissionFor({
               user, resourceKey, actionKey, params, db
             });
+
             //TODO has permission on each include
-            console.log('resources');
             if (hasPermission) {
               var getResourceData;
 
               if (schemas[singularize(resourceKey)]) {
-                console.log('user', user);
                 getResourceData = () => db.execute({actionKey, resourceKey, params}, {source: '/resources', logs, user, files});
               }
               else {
