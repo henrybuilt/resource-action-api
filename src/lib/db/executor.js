@@ -7,7 +7,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
     constructor({resourceKey, actionKey, params={}, options}, {user}={}) {
       params = _.cloneDeep(params);
       options = _.defaults(options, {useMiddleware: true, shouldLog: true, deepInclude: false});
-      console.log(user);
+      console.log('user', user);
       if (user) this.user = options.user = user;
 
       var {files} = options;

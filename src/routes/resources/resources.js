@@ -40,6 +40,7 @@ module.exports = {
               var getResourceData;
 
               if (schemas[singularize(resourceKey)]) {
+                console.log('user', user);
                 getResourceData = () => db.execute({actionKey, resourceKey, params}, {source: '/resources', logs, user, files});
               }
               else {
