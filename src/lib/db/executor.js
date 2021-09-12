@@ -4,9 +4,11 @@ var middlewareRunner = require('../middleware/middleware');
 
 module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions}) => {
   class Executor {
-    constructor({resourceKey, actionKey, params={}, options}) {
+    constructor({resourceKey, actionKey, params={}, options}, {user}={}) {
       params = _.cloneDeep(params);
       options = _.defaults(options, {useMiddleware: true, shouldLog: true, deepInclude: false});
+
+      if (user) this.user = options.user = user;
 
       var {files} = options;
 
