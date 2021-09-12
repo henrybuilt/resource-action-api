@@ -35,7 +35,7 @@ module.exports = {
               user, resourceKey, actionKey, params, db
             });
             //TODO has permission on each include
-
+            console.log('resources');
             if (hasPermission) {
               var getResourceData;
 
