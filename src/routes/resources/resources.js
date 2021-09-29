@@ -20,66 +20,71 @@ module.exports = {
         body.resources = JSON.parse(body.resources);
       }
 
-      var actions = lib.waterfall(body.resources, [
-        [_.mapValues, (action, actionKey) => ({action, actionKey})],
-        [_.sortBy, ({actionKey}) => ({get: 0, create: 1, update: 2, destroy: 3}[actionKey])]
-      ]);
+      if (global.latestValidBuildNumbers && body.appKey && body.appBuildNumber && body.appBuildNumber < global.latestValidBuildNumbers[body.appKey]) {
+        errors.push({message: `The version of the app you're using is out of date. Please ${body.isWeb ? 'refresh' : 'update it via the App Store'} to use the latest version.`});
+      }
+      else {
+        var actions = lib.waterfall(body.resources, [
+          [_.mapValues, (action, actionKey) => ({action, actionKey})],
+          [_.sortBy, ({actionKey}) => ({get: 0, create: 1, update: 2, destroy: 3}[actionKey])]
+        ]);
 
-      await lib.async.forEach(actions, async ({action, actionKey}) => {
-        await lib.async.forEach(action, async (params, resourceKey) => {
-          var mode = Array.isArray(params) ? 'many' : 'one';
-          var pluralParams = mode === 'many' ? params : [params]; //always make params an array
+        await lib.async.forEach(actions, async ({action, actionKey}) => {
+          await lib.async.forEach(action, async (params, resourceKey) => {
+            var mode = Array.isArray(params) ? 'many' : 'one';
+            var pluralParams = mode === 'many' ? params : [params]; //always make params an array
 
-          var resourcesData = _.filter(await lib.async.map(pluralParams, async params => {
-            var hasPermission = await permissions.hasPermissionFor({
-              user, resourceKey, actionKey, params, db
-            });
+            var resourcesData = _.filter(await lib.async.map(pluralParams, async params => {
+              var hasPermission = await permissions.hasPermissionFor({
+                user, resourceKey, actionKey, params, db
+              });
 
-            //TODO has permission on each include
-            if (hasPermission) {
-              var getResourceData;
+              //TODO has permission on each include
+              if (hasPermission) {
+                var getResourceData;
 
-              if (schemas[singularize(resourceKey)]) {
-                getResourceData = () => db.execute({actionKey, resourceKey, params}, {source: '/resources', logs, user, files});
-              }
-              else {
-                var execute = _.get(pseudoResources, `${singularize(resourceKey)}.actions.${actionKey}.execute`);
-
-                if (execute) {
-                  getResourceData = () => execute({db});
+                if (schemas[singularize(resourceKey)]) {
+                  getResourceData = () => db.execute({actionKey, resourceKey, params}, {source: '/resources', logs, user, files});
                 }
                 else {
-                  errors.push({message: `${resourceKey}.${actionKey} is an invalid request`});
+                  var execute = _.get(pseudoResources, `${singularize(resourceKey)}.actions.${actionKey}.execute`);
+
+                  if (execute) {
+                    getResourceData = () => execute({db});
+                  }
+                  else {
+                    errors.push({message: `${resourceKey}.${actionKey} is an invalid request`});
+                  }
+                }
+
+                if (getResourceData) {
+                  try {
+                    var resourceData = await getResourceData();
+                  }
+                  catch (error) {
+                    errors.push({message: error.message});
+
+                    if (process.env.NODE_ENV !== 'test') console.error(error);
+                  }
                 }
               }
-
-              if (getResourceData) {
-                try {
-                  var resourceData = await getResourceData();
-                }
-                catch (error) {
-                  errors.push({message: error.message});
-
-                  if (process.env.NODE_ENV !== 'test') console.error(error);
-                }
+              else {
+                errors.push({key: 'permission-denied', message: `Permission denied for: ${actionKey} ${resourceKey}`});
               }
-            }
-            else {
-              errors.push({key: 'permission-denied', message: `Permission denied for: ${actionKey} ${resourceKey}`});
-            }
 
-            return resourceData;
-          }), resourceData => resourceData !== undefined);
+              return resourceData;
+            }), resourceData => resourceData !== undefined);
 
-          if (resourcesData.length > 0) {
-            singularResponses.push({
-              actionKey,
-              resourceKey,
-              resourceData: mode === 'many' ? resourcesData : resourcesData[0]
-            });
-          }
+            if (resourcesData.length > 0) {
+              singularResponses.push({
+                actionKey,
+                resourceKey,
+                resourceData: mode === 'many' ? resourcesData : resourcesData[0]
+              });
+            }
+          });
         });
-      });
+      }
 
       var data = {resources: {get: {}, create: {}}};
 
