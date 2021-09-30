@@ -21,7 +21,7 @@ module.exports = {
       }
 
       if (global.latestValidBuildNumbers && body.appKey && body.appBuildNumber && body.appBuildNumber < global.latestValidBuildNumbers[body.appKey]) {
-        errors.push({message: `The version of the app you're using is out of date. Please ${body.isWeb ? 'refresh' : 'update it via the App Store'} to use the latest version.`});
+        errors.push({message: `The version of the app you're using is out of date. Please ${body.isWeb ? 'refresh' : 'update it via the app store'} to use the latest version.`});
       }
       else {
         var actions = lib.waterfall(body.resources, [
