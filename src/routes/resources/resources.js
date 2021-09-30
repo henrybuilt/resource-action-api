@@ -86,7 +86,7 @@ module.exports = {
         });
       }
 
-      var data = {resources: {get: {}, create: {}}};
+      var data = {pollFrequency: global.pollFrequency || 0, resources: {get: {}, create: {}}};
 
       if (!errors.length) {
         _.forEach(singularResponses, ({actionKey, resourceKey, resourceData}) => {
