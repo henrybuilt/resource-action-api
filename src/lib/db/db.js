@@ -3,11 +3,11 @@ var chalk = require('chalk');
 
 module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, permissions}) => {
   var dbConnection = dbConnection;
-  
-  var query = (string, args=[]) => {
+
+  var query = (string, args=[], {shouldLog=true}={}) => {
     return new Promise((resolve, reject) => {
       var startTime = Date.now();
-      
+
       if (dbConfig.type === 'postgresql') {
         var x = string.split('?');
 
@@ -27,8 +27,8 @@ module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, p
       dbConnection.query(string, args, (error, result) => {
         var endTime = Date.now();
         var deltaTime = endTime - startTime;
-        
-        if (process.env.NODE_ENV !== 'test') {
+
+        if (process.env.NODE_ENV !== 'test' && shouldLog) {
           var color = deltaTime > 50 ? 'red' : 'green';
 
           log(`  query: (${deltaTime}ms) `, chalk[color](string));
@@ -82,7 +82,7 @@ module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, p
         });
       }
 
-      return query(string, args);
+      return query(string, args, {shouldLog, logs});
     },
 
     async execute({actionKey, resourceKey, params}, options) {
