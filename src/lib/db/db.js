@@ -69,11 +69,11 @@ module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, p
       if (shouldLog) {
         var queryLogs = logs || [];
 
-        queryLogs.push({items: [` Query string:   `, chalk.cyan(string)]});
+        // queryLogs.push({items: [` Query string:   `, chalk.cyan(string)]});
 
-        if (process.env.NODE_ENV !== 'production') {
-          queryLogs.push({items: [`         args:   `, chalk.cyan(lib.json.stringify(args))]});
-        }
+        // if (process.env.NODE_ENV !== 'production') {
+        //   queryLogs.push({items: [`         args:   `, chalk.cyan(lib.json.stringify(args))]});
+        // }
 
         if (!logs) _.forEach(queryLogs, ({items}) => {
           if (process.env.NODE_ENV !== 'test') {
