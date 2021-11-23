@@ -31,14 +31,14 @@ module.exports = ({dbConnection, dbConfig, schemas, relationships, middleware, p
         if (process.env.NODE_ENV !== 'test' && shouldLog) {
           var color = deltaTime > 50 ? 'red' : 'green';
 
-          log(`\n  query: (${deltaTime}ms) `, chalk[color](string));
+          log(`\n query: (${deltaTime}ms) `, chalk[color](string));
 
           if (deltaTime > 200) {
             console.trace('logging trace to help debug slow query');
           }
 
           if (process.env.NODE_ENV !== 'production' && args) {
-            log(`  args: `, chalk[color](lib.json.stringify(args)));
+            log(` args: `, chalk[color](lib.json.stringify(args)));
           }
         }
 
