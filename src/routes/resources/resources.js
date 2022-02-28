@@ -12,9 +12,18 @@ module.exports = {
       var singularResponses = [], errors = [];
       var {body, files} = request;
       var token = body.token;
-      var user = token ? await auth.token.userFor({db, token}) : null;
       var logs = [];
       var requestStartTime = Date.now();
+      var user = null;
+
+      if (token) {
+        try {
+          user = await auth.token.userFor({db, token});
+        }
+        catch (error) {
+          console.error(error);
+        }
+      }
 
       if (files) {
         body.resources = JSON.parse(body.resources);
