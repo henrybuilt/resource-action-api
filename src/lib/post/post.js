@@ -37,7 +37,7 @@ module.exports = ({app, db, auth}) => function(path, callback, {requireUser=true
     try {
       if (requireUser && !(user && user.id)) throwError({message: 'Your session is invalid or has expired. Please try logging in again.', key: 'userRequired'});
 
-      var data = await callback({...request.body, user, body: request.body, throwError});
+      var data = await callback({...request.body, user, body: request.body, throwError, response, request});
 
       data ? respond({response, data}) : respond({response});
     }
