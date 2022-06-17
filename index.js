@@ -23,14 +23,9 @@ var api = {
   init: ({port, dbConfig, schemas, middleware, relationships, permissions, pseudoResources}) => {
     //< server init
     const app = express();
-    const jsonParser = bodyParser.json();
 
-    // app.use(bodyParser.urlencoded({extended: true}));
-
-    sharedExports.app.use(express.json({limit: '50mb'}));
-    sharedExports.app.use(express.urlencoded({limit: '50mb'}));
-
-    // app.use(jsonParser);
+    app.use(express.json({limit: '50mb'}));
+    app.use(express.urlencoded({limit: '50mb'}));
     app.use(cors());
     app.use(passport.initialize());
     app.use((request, response, next) =>  {
