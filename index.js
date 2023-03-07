@@ -24,7 +24,14 @@ var api = {
     //< server init
     const app = express();
 
-    app.use(express.json({limit: '500mb'}));
+    app.use((req, res, next) => { // https://github.com/stripe/stripe-node/issues/1254
+      if (_.includes(req.originalUrl, 'raw-route')) {
+        next();
+      }
+      else {
+        express.json({limit: '500mb'})(req, res, next);
+      }
+    });
     app.use(express.urlencoded({limit: '500mb', extended: false}));
     app.use(cors());
     app.use(passport.initialize());
