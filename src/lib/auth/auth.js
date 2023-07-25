@@ -57,7 +57,12 @@ const auth = {
       if (token) {
         var data = await auth.token.dataFor({token});
 
-        user = await db.get('user', {where: {id: data.user.id}}, {shouldLog: false});
+        if (data.user.id === null) {
+          user = data.user;
+        }
+        else {
+          user = await db.get('user', {where: {id: data.user.id}}, {shouldLog: false});
+        }
       }
 
       return user;
