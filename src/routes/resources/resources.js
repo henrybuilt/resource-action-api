@@ -2,12 +2,9 @@ const auth = require('../../lib/auth/auth');
 const {respond} = require('../../lib/request');
 const {singularize} = require('inflection');
 const chalk = require('chalk');
-const fileUpload = require('express-fileupload');
 
 module.exports = {
   init: ({app, db, schemas, permissions, pseudoResources}) => {
-    app.use(fileUpload());
-
     app.post('/resources', async (request, response) => {
       var singularResponses = [], errors = [];
       var {body, files} = request;
