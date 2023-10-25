@@ -4,7 +4,7 @@ const {singularize} = require('inflection');
 const chalk = require('chalk');
 
 module.exports = {
-  init: ({app, db, schemas, permissions, pseudoResources}) => {
+  init: ({app, db, schemas, permissions, afterAllResourcesExecute, pseudoResources}) => {
     app.post('/resources', async (request, response) => {
       var singularResponses = [], errors = [];
       var {body, files} = request;
@@ -102,8 +102,9 @@ module.exports = {
         });
       }
 
-      respond({response, data, errors});
+      if (afterAllResourcesExecute) await afterAllResourcesExecute({resources: body.resources});
 
+      respond({response, data, errors});
 
       log('');
       log(chalk.inverse(` POST /resources `), chalk.inverse(` ${Date.now() - requestStartTime}ms `),

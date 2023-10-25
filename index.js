@@ -20,7 +20,7 @@ global.alwaysLog = (...args) => {
 //TODO s3
 //TODO mail
 var api = {
-  init: ({port, dbConfig, schemas, middleware, relationships, permissions, pseudoResources}) => {
+  init: ({port, dbConfig, schemas, middleware, relationships, permissions, pseudoResources, afterAllResourcesExecute}) => {
     //< server init
     const app = express();
 
@@ -63,7 +63,7 @@ var api = {
       else {
         _.forEach(['resources', 'auth'], routeKey => {
           require(`./src/routes/${routeKey}/${routeKey}`).init({
-            db, app, schemas, permissions, pseudoResources
+            db, app, schemas, permissions, pseudoResources, afterAllResourcesExecute
           })
         });
 
