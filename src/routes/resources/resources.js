@@ -102,7 +102,7 @@ module.exports = {
         });
       }
 
-      if (afterAllResourcesExecute) await afterAllResourcesExecute({resources: body.resources});
+      if (afterAllResourcesExecute) await afterAllResourcesExecute({resources: body.resources, db});
 
       respond({response, data, errors});
 
