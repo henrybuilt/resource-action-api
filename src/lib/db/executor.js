@@ -12,10 +12,6 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
       var {files} = options;
 
-      if (_.includes(['get', 'create'], actionKey)) {
-        params.where = _.defaults(params.where, {deleted: 0});
-      }
-
       var pluralResourceKey = pluralize(resourceKey);
       var quantityMode = resourceKey === pluralResourceKey && actionKey !== 'create' ? 'many' : 'one';
       var originalParams = _.cloneDeep(params);
@@ -290,10 +286,27 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
           }
 
           await this.runMiddleware({queryData: this.queryData, onKey: 'queryWhere'});
-          await this.filterByAssociations();
+          await this.filterByAssociations(); //WARNING doesn't yet support OR
 
           if (this.queryData.whereSqlStrings.length) {
-            this.queryData.string += ` WHERE ${this.queryData.whereSqlStrings.join(' AND ')}`;
+            this.queryData.string += ` WHERE `;
+
+            var allStrings = this.queryData.whereSqlStrings;
+            var normalWhereCount = _.size(this.params.where);
+
+            //normal where conditions
+            if (normalWhereCount > 0) {
+              var normalWhereMode = Array.isArray(this.params.where) ? ' OR ' : ' AND ';
+
+              this.queryData.string += ` (${_.join(_.slice(allStrings, 0, normalWhereCount), normalWhereMode)}) `;
+            }
+
+            //other where conditions
+            if (this.queryData.whereSqlStrings.length - normalWhereCount > 0) {
+              if (normalWhereCount > 0) this.queryData.string += ' AND ';
+
+              this.queryData.string += ` ${_.join(_.slice(allStrings, normalWhereCount), ` AND `)} `;
+            }
           }
         }
       }
