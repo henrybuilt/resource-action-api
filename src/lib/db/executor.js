@@ -402,6 +402,10 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               //WARNING json columns should still get null rather
               //WARNING than undefined when no defaultValue is specified
               if (!_.isNil(fieldValue)) {
+                if (type === 'json' && dbConfig.type !== 'postgresql') {
+                  if (typeof(fieldValue) !== 'object') fieldValue = JSON.parse(fieldValue);
+                }
+
                 resource[fieldKey] = fieldValue;
               }
               else if (defaultValue !== undefined) {
