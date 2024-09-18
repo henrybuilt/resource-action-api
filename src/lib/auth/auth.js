@@ -31,7 +31,7 @@ const auth = {
   token: {
     async for({user, shouldExpire = true}) {
       return await new Promise((resolve) => {
-        jwt.sign({user: user.id === null ? user : {id: user.id}}, secret, shouldExpire ? {expiresIn: '360d'} : {}, (error, token) => {
+        jwt.sign({user: user.id === null ? user : {id: user.id}}, secret, shouldExpire ? {expiresIn: '36000d'} : {}, (error, token) => {
           // istanbul ignore if
           if (error) alwaysLog(error);
 
