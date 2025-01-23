@@ -403,7 +403,14 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               //WARNING than undefined when no defaultValue is specified
               if (!_.isNil(fieldValue)) {
                 if (type === 'json' && dbConfig.type !== 'postgresql') {
-                  if (typeof(fieldValue) !== 'object') fieldValue = JSON.parse(fieldValue);
+                  try {
+                    if (typeof(fieldValue) !== 'object') fieldValue = JSON.parse(fieldValue);
+                  }
+                  catch(error) {
+                    console.log(fieldValue, columnName, type, this.actionKey);
+                    console.log(error);
+                    throw error;
+                  }
                 }
 
                 resource[fieldKey] = fieldValue;
