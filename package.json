@@ -1,6 +1,6 @@
 {
   "name": "resource-action-api",
-  "version": "2.1.48",
+  "version": "2.1.49",
   "description": "",
   "main": "index.js",
   "scripts": {
