@@ -386,7 +386,7 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
         this.queryData.results = await db.query(this.queryData.string, this.queryData.args, this.options);
 
         if (this.actionKey === 'create') {
-          this.queryData.results = [{...this.params.props, id: this.queryData.results.insertId}];
+          this.queryData.results = [{...this.params.props, id: this.queryData.results[0].insertId}];
         }
 
         var resourceData;
