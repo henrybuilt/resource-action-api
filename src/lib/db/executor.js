@@ -384,42 +384,31 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
 
       if (shouldRun) {
         this.queryData.results = await db.query(this.queryData.string, this.queryData.args, this.options);
-        console.log(this.queryData.results);
+
         if (this.actionKey === 'create') {
           this.queryData.results = [{...this.params.props, id: this.queryData.results.insertId}];
         }
 
+        console.log(this.queryData.results);
         var resourceData;
 
         if (_.includes(['get', 'create'], this.actionKey)) {
           var resources = _.map(this.queryData.results, result => {
             var resource = {};
 
-            _.forEach(this.schema.fields, ({columnName, defaultValue, type}, fieldKey) => {
-              var isCreateIdField = fieldKey === 'id' && this.actionKey === 'create';
-              var fieldValue = (columnName && !isCreateIdField) ? result[columnName] : result[fieldKey];
+            _.forEach(this.schema.fields, ({ columnName, defaultValue, type }, fieldKey) => {
+              const isCreateIdField = fieldKey === 'id' && this.actionKey === 'create';
+              let fieldValue = (columnName && !isCreateIdField) ? result[columnName] : result[fieldKey];
 
-              //WARNING json columns should still get null rather
-              //WARNING than undefined when no defaultValue is specified
-              if (!_.isNil(fieldValue) && typeof(fieldValue) !== 'string') {
-                if (type === 'json' && dbConfig.type !== 'postgresql') {
-                  try {
-                    if (typeof(fieldValue) !== 'object') fieldValue = JSON.parse(fieldValue);
-                  }
-                  catch(error) {
-                    console.log(fieldValue, columnName, type, this.actionKey);
-                    console.log(error);
-                    throw error;
-                  }
+              if (fieldValue !== undefined) {              // keep strings and nulls
+                if (type === 'json' && typeof fieldValue === 'string') {
+                  try { fieldValue = JSON.parse(fieldValue); } catch { /* leave as-is */ }
                 }
-
-                resource[fieldKey] = fieldValue;
-              }
-              else if (defaultValue !== undefined) {
+                resource[fieldKey] = fieldValue;           // preserves null
+              } else if (defaultValue !== undefined) {
                 resource[fieldKey] = _.cloneDeep(defaultValue);
-              }
-              else if (fieldValue !== undefined) {
-                resource[fieldKey] = fieldValue;
+              } else if (type === 'json') {
+                resource[fieldKey] = null;                 // explicit null for empty JSON
               }
             });
 
