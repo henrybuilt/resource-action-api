@@ -400,15 +400,21 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               const isCreateIdField = fieldKey === 'id' && this.actionKey === 'create';
               let fieldValue = (columnName && !isCreateIdField) ? result[columnName] : result[fieldKey];
 
-              if (fieldValue !== undefined) {              // keep strings and nulls
+              if (fieldValue !== undefined && fieldValue !== null) {              // keep strings and nulls
                 if (type === 'json' && typeof fieldValue === 'string') {
                   try { fieldValue = JSON.parse(fieldValue); } catch { /* leave as-is */ }
                 }
+
                 resource[fieldKey] = fieldValue;           // preserves null
-              } else if (defaultValue !== undefined) {
+              }
+              else if (defaultValue !== undefined) {
                 resource[fieldKey] = _.cloneDeep(defaultValue);
-              } else if (type === 'json') {
+              }
+              else if (type === 'json') {
                 resource[fieldKey] = null;                 // explicit null for empty JSON
+              }
+              else {
+                resource[fieldKey] = null;            // undefined for missing fields
               }
             });
 
