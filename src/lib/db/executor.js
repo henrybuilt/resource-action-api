@@ -413,9 +413,6 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
               else if (type === 'json') {
                 resource[fieldKey] = null;                 // explicit null for empty JSON
               }
-              else {
-                resource[fieldKey] = null;            // undefined for missing fields
-              }
             });
 
             return resource;
