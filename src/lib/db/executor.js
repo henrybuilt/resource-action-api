@@ -116,11 +116,32 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
       });
     }
 
+    formatDateForMySQL(dateValue) {
+      if (!dateValue) return dateValue;
+
+      // If it's already a string in MySQL format, return as-is
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateValue)) {
+        return dateValue;
+      }
+
+      // Convert to MySQL format using moment
+      return moment(dateValue).utc().format('YYYY-MM-DD HH:mm:ss');
+    }
+
     cleanParams() {
       this.stringifyJsonParams();
 
       if (this.params.fields && !_.includes(this.params.fields, 'id')) this.params.fields.push('id');
       if (this.params.props && this.actionKey === 'update') delete this.params.props.id;
+
+      // Format all date fields in props to MySQL format
+      if (this.params.props) {
+        _.forEach(this.schema.fields, (fieldConfig, fieldKey) => {
+          if (fieldConfig.type === 'date' && this.params.props[fieldKey]) {
+            this.params.props[fieldKey] = this.formatDateForMySQL(this.params.props[fieldKey]);
+          }
+        });
+      }
 
       //auto date detection
       var dateFieldKeys = [];
