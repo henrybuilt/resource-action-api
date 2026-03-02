@@ -410,7 +410,6 @@ module.exports = ({db, dbConfig, schemas, relationships, middleware, permissions
           this.queryData.results = [{...this.params.props, id: this.queryData.results.insertId}];
         }
 
-        console.log(this.queryData.results);
         var resourceData;
 
         if (_.includes(['get', 'create'], this.actionKey)) {
